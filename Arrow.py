@@ -52,11 +52,8 @@ class Arrow(pygame.sprite.Sprite):
                 0
             )
 
-        direction = direction.normalize()
-
-        self.velocity = (
-            direction * self.speed
-        )
+        self.direction = direction.normalize()
+        self.velocity = self.direction * self.speed
 
         # =====================================================
         # IMAGE
@@ -73,10 +70,10 @@ class Arrow(pygame.sprite.Sprite):
 
         angle = math.degrees(
             math.atan2(
-                -self.velocity.y,
-                self.velocity.x
+                -self.direction.y,
+                self.direction.x
             )
-        )
+        ) - 90
 
         self.image = pygame.transform.rotate(
             self.original_image,
@@ -93,9 +90,7 @@ class Arrow(pygame.sprite.Sprite):
 
     def update(self, dt):
 
-        self.position += (
-            self.velocity * dt
-        )
+        self.position += self.direction * self.speed * dt
 
         self.rect.center = (
             round(self.position.x),

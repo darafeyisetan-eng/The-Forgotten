@@ -87,6 +87,7 @@ class Game:
         )
         self.scene = "forest"
         self.map = Map(self.scene)
+        self.place_player_at_road()
         self.game_over = False
 
         # =====================================================
@@ -311,13 +312,25 @@ class Game:
 
     def restart(self):
         self.player.health = self.player.max_health
-        self.player.rect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
+        self.place_player_at_road()
         self.enemies = pygame.sprite.Group(
             Enemy(150, 150),
             Enemy(650, 180),
             Enemy(650, 450)
         )
         self.game_over = False
+
+    def place_player_at_road(self):
+        if self.scene == "forest":
+            self.player.rect.midright = (
+                SCREEN_WIDTH - 10,
+                SCREEN_HEIGHT // 2
+            )
+        else:
+            self.player.rect.midleft = (
+                10,
+                SCREEN_HEIGHT // 2
+            )
 
     def try_scene_transition(self):
         if not self.map.at_road_exit(self.player.rect):
@@ -332,9 +345,9 @@ class Game:
             Enemy(650, 450),
         )
         if self.scene == "grove":
-            self.player.rect.midright = (110, SCREEN_HEIGHT // 2)
+            self.player.rect.midleft = (110, SCREEN_HEIGHT // 2)
         else:
-            self.player.rect.midleft = (SCREEN_WIDTH - 110, SCREEN_HEIGHT // 2)
+            self.player.rect.midright = (SCREEN_WIDTH - 110, SCREEN_HEIGHT // 2)
 
     # =====================================================
     # SHOOT ARROW
