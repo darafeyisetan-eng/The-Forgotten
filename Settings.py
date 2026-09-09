@@ -27,13 +27,8 @@ HERO_MAX_HEALTH = 100
 # PROJECT PATH
 # =====================================================
 
-BASE_DIR = os.path.join(
-    os.path.expanduser("~"),
-    "OneDrive",
-    "Documents",
-    "Python",
-    "TheForgotten",
-    "ForestRPG"
+BASE_DIR = os.path.dirname(
+    os.path.abspath(__file__)
 )
 
 
