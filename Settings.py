@@ -67,6 +67,15 @@ MAP_DATA_PATH = os.path.join(
     "map.json"
 )
 
+SECOND_MAP_DATA_PATH = os.path.join(
+    ASSET_PATH,
+    "..",
+    "Phaser Demo",
+    "assets",
+    "maps",
+    "map copy.json",
+)
+
 PHASER_ENVIRONMENT_PATH = os.path.join(
     ASSET_PATH,
     "..",

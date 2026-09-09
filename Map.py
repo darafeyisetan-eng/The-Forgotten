@@ -5,6 +5,7 @@ import pygame
 
 from Settings import (
     MAP_DATA_PATH,
+    SECOND_MAP_DATA_PATH,
     PHASER_ENVIRONMENT_PATH,
     SCREEN_HEIGHT,
     SCREEN_WIDTH,
@@ -12,8 +13,13 @@ from Settings import (
 
 
 class Map:
-    def __init__(self):
-        with open(MAP_DATA_PATH, "r", encoding="utf-8") as map_file:
+    def __init__(self, scene="forest"):
+        self.scene = scene
+        map_path = MAP_DATA_PATH if scene == "forest" else SECOND_MAP_DATA_PATH
+        if not os.path.isfile(map_path):
+            map_path = MAP_DATA_PATH
+
+        with open(map_path, "r", encoding="utf-8") as map_file:
             map_data = json.load(map_file)
 
         self.tile_size = map_data["tilewidth"]
@@ -25,6 +31,41 @@ class Map:
         )
         self.image = pygame.Surface(self.world_size, pygame.SRCALPHA)
         self.image.fill((30, 55, 35))
+        scale_x = SCREEN_WIDTH / self.world_size[0]
+        scale_y = SCREEN_HEIGHT / self.world_size[1]
+        self.collision_rects = []
+        collision_layer = next(
+            (
+                layer for layer in map_data["layers"]
+                if layer["type"] == "tilelayer"
+                and "collision" in layer["name"].lower()
+            ),
+            None,
+        )
+        if collision_layer is not None:
+            for index, raw_gid in enumerate(collision_layer["data"]):
+                if raw_gid & 0x1FFFFFFF:
+                    x = (index % self.width) * self.tile_size * scale_x
+                    y = (index // self.width) * self.tile_size * scale_y
+                    self.collision_rects.append(
+                        pygame.Rect(
+                            round(x),
+                            round(y),
+                            max(1, round(self.tile_size * scale_x)),
+                            max(1, round(self.tile_size * scale_y)),
+                        )
+                    )
+
+        portal_height = 96
+        portal_y = (SCREEN_HEIGHT - portal_height) // 2
+        if scene == "forest":
+            self.road_entrance = pygame.Rect(
+                SCREEN_WIDTH - 80, portal_y, 80, portal_height
+            )
+        else:
+            self.road_entrance = pygame.Rect(
+                0, portal_y, 80, portal_height
+            )
 
         tilesets = []
         for tileset_data in map_data["tilesets"]:
@@ -84,3 +125,11 @@ class Map:
 
     def draw(self, screen):
         screen.blit(self.image, self.rect)
+
+    def collides(self, rect):
+        if rect.colliderect(self.road_entrance):
+            return False
+        return any(rect.colliderect(obstacle) for obstacle in self.collision_rects)
+
+    def at_road_exit(self, rect):
+        return rect.colliderect(self.road_entrance)

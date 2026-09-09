@@ -85,7 +85,8 @@ class Game:
             Enemy(650, 180),
             Enemy(650, 450)
         )
-        self.map = Map()
+        self.scene = "forest"
+        self.map = Map(self.scene)
         self.game_over = False
 
         # =====================================================
@@ -237,9 +238,8 @@ class Game:
         # PLAYER MOVEMENT
         # =====================================================
 
-        self.player.keyboard_input(
-            dt
-        )
+        self.player.keyboard_input(dt, self.map.collides)
+        self.try_scene_transition()
         self.player.update_status(dt)
 
         # =====================================================
@@ -319,6 +319,23 @@ class Game:
         )
         self.game_over = False
 
+    def try_scene_transition(self):
+        if not self.map.at_road_exit(self.player.rect):
+            return
+
+        self.scene = "grove" if self.scene == "forest" else "forest"
+        self.map = Map(self.scene)
+        self.arrows.empty()
+        self.enemies = pygame.sprite.Group(
+            Enemy(150, 150),
+            Enemy(650, 180),
+            Enemy(650, 450),
+        )
+        if self.scene == "grove":
+            self.player.rect.midright = (110, SCREEN_HEIGHT // 2)
+        else:
+            self.player.rect.midleft = (SCREEN_WIDTH - 110, SCREEN_HEIGHT // 2)
+
     # =====================================================
     # SHOOT ARROW
     # =====================================================
@@ -372,7 +389,10 @@ class Game:
             True, (255, 255, 255)
         )
         self.screen.blit(text, (24, 48))
-        controls = self.font.render("WASD move  H heal  M bow  LMB attack", True, (255, 255, 255))
+        controls = self.font.render(
+            f"{self.scene.title()}  |  WASD move  H heal  M bow  LMB attack",
+            True, (255, 255, 255)
+        )
         self.screen.blit(controls, (12, SCREEN_HEIGHT - 32))
         if self.game_over:
             overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)

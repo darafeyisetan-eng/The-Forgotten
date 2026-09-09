@@ -109,7 +109,7 @@ class Hero(pygame.sprite.Sprite):
     # MOVEMENT
     # =====================================================
 
-    def keyboard_input(self, dt):
+    def keyboard_input(self, dt, collision_checker=None):
 
         keys = pygame.key.get_pressed()
 
@@ -161,13 +161,16 @@ class Hero(pygame.sprite.Sprite):
         # MOVE
         # =================================================
 
-        self.rect.x += int(
-            dx * self.speed * dt
-        )
-
-        self.rect.y += int(
-            dy * self.speed * dt
-        )
+        move_x = int(dx * self.speed * dt)
+        move_y = int(dy * self.speed * dt)
+        if move_x:
+            candidate = self.rect.move(move_x, 0)
+            if collision_checker is None or not collision_checker(candidate):
+                self.rect = candidate
+        if move_y:
+            candidate = self.rect.move(0, move_y)
+            if collision_checker is None or not collision_checker(candidate):
+                self.rect = candidate
 
         # =================================================
         # SCREEN BOUNDARIES
