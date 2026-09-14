@@ -335,16 +335,41 @@ class Game:
         self.game_over = False
 
     def place_player_at_road(self):
+        """Place the player at a safe side of the road for the current scene."""
         if self.scene == "forest":
-            self.player.rect.midright = (
-                SCREEN_WIDTH - 10,
-                SCREEN_HEIGHT // 2
-            )
+            preferred = [
+                (SCREEN_WIDTH - 140, SCREEN_HEIGHT // 2),
+                (SCREEN_WIDTH - 210, SCREEN_HEIGHT // 2),
+                (SCREEN_WIDTH - 140, SCREEN_HEIGHT // 2 - 110),
+                (SCREEN_WIDTH - 140, SCREEN_HEIGHT // 2 + 110),
+            ]
         else:
-            self.player.rect.midleft = (
-                10,
-                SCREEN_HEIGHT // 2
-            )
+            preferred = [
+                (140, SCREEN_HEIGHT // 2),
+                (210, SCREEN_HEIGHT // 2),
+                (140, SCREEN_HEIGHT // 2 - 110),
+                (140, SCREEN_HEIGHT // 2 + 110),
+            ]
+
+        candidates = preferred + [
+            (x, y)
+            for y in range(55, SCREEN_HEIGHT - 54, 55)
+            for x in range(55, SCREEN_WIDTH - 54, 55)
+        ]
+        for x, y in candidates:
+            candidate = self.player.rect.copy()
+            candidate.center = (x, y)
+            if (
+                candidate.left >= 0
+                and candidate.top >= 0
+                and candidate.right <= SCREEN_WIDTH
+                and candidate.bottom <= SCREEN_HEIGHT
+                and not self.map.collides(candidate)
+            ):
+                self.player.rect = candidate
+                return
+
+        raise RuntimeError(f"No free spawn position found in {self.scene}")
 
     def try_scene_transition(self):
         if not self.map.at_road_exit(self.player.rect):
@@ -358,10 +383,7 @@ class Game:
             Enemy(650, 180),
             Enemy(650, 450),
         )
-        if self.scene == "grove":
-            self.player.rect.midleft = (110, SCREEN_HEIGHT // 2)
-        else:
-            self.player.rect.midright = (SCREEN_WIDTH - 110, SCREEN_HEIGHT // 2)
+        self.place_player_at_road()
 
     # =====================================================
     # SHOOT ARROW
