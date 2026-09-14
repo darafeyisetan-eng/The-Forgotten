@@ -47,14 +47,19 @@ class Map:
                 if raw_gid & 0x1FFFFFFF:
                     x = (index % self.width) * self.tile_size * scale_x
                     y = (index // self.width) * self.tile_size * scale_y
-                    self.collision_rects.append(
-                        pygame.Rect(
-                            round(x),
-                            round(y),
-                            max(1, round(self.tile_size * scale_x)),
-                            max(1, round(self.tile_size * scale_y)),
-                        )
+                    collision_rect = pygame.Rect(
+                        round(x),
+                        round(y),
+                        max(1, round(self.tile_size * scale_x)),
+                        max(1, round(self.tile_size * scale_y)),
                     )
+                    # Keep collision geometry in the same screen-space
+                    # coordinate system as the scaled map image.
+                    collision_rect = collision_rect.clip(
+                        pygame.Rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT)
+                    )
+                    if collision_rect.width and collision_rect.height:
+                        self.collision_rects.append(collision_rect)
 
         portal_height = 96
         portal_y = (SCREEN_HEIGHT - portal_height) // 2
@@ -127,6 +132,8 @@ class Map:
         screen.blit(self.image, self.rect)
 
     def collides(self, rect):
+        # The road is deliberately traversable so scene transitions remain
+        # possible even though it is adjacent to the collision layer.
         if rect.colliderect(self.road_entrance):
             return False
         return any(rect.colliderect(obstacle) for obstacle in self.collision_rects)

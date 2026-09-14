@@ -20,6 +20,9 @@ from Enemy import Enemy
 
 class Game:
 
+    MAX_ARROWS = 10
+    RESTOCK_DURATION = 30.0
+
     def __init__(self):
 
         # =====================================================
@@ -89,6 +92,8 @@ class Game:
         self.map = Map(self.scene)
         self.place_player_at_road()
         self.game_over = False
+        self.arrows_remaining = self.MAX_ARROWS
+        self.restock_remaining = 0.0
 
         # =====================================================
         # MOUSE
@@ -154,8 +159,11 @@ class Game:
                 elif event.key == pygame.K_h:
                     self.player.heal()
 
-                elif event.key == pygame.K_r and self.game_over:
-                    self.restart()
+                elif event.key == pygame.K_r:
+                    if self.game_over:
+                        self.restart()
+                    else:
+                        self.start_restock()
 
             # =================================================
             # MOUSE DOWN
@@ -171,7 +179,7 @@ class Game:
                     # BOW
                     # -----------------------------------------
 
-                    if self.player.bow_equipped:
+                    if self.player.bow_equipped and self.arrows_remaining > 0:
 
                         self.player.start_bow()
 
@@ -232,6 +240,8 @@ class Game:
 
     def update(self, dt):
 
+        self.update_restock(dt)
+
         if self.game_over:
             return
 
@@ -258,6 +268,7 @@ class Game:
         if (
             self.player.bow_equipped
             and self.mouse_held
+            and self.arrows_remaining > 0
             and not self.player.attacking
         ):
 
@@ -313,6 +324,9 @@ class Game:
     def restart(self):
         self.player.health = self.player.max_health
         self.place_player_at_road()
+        self.arrows_remaining = self.MAX_ARROWS
+        self.restock_remaining = 0.0
+        self.arrows.empty()
         self.enemies = pygame.sprite.Group(
             Enemy(150, 150),
             Enemy(650, 180),
@@ -353,7 +367,24 @@ class Game:
     # SHOOT ARROW
     # =====================================================
 
+    def start_restock(self):
+        if self.arrows_remaining >= self.MAX_ARROWS or self.restock_remaining > 0:
+            return False
+        self.restock_remaining = self.RESTOCK_DURATION
+        return True
+
+    def update_restock(self, dt):
+        if self.restock_remaining <= 0:
+            return
+        self.restock_remaining = max(0.0, self.restock_remaining - dt)
+        if self.restock_remaining == 0:
+            self.arrows_remaining = self.MAX_ARROWS
+
     def shoot_arrow(self):
+
+        if self.arrows_remaining <= 0:
+            self.player.cancel_bow()
+            return False
 
         mouse_x, mouse_y = (
             pygame.mouse.get_pos()
@@ -370,6 +401,8 @@ class Game:
         self.arrows.add(
             arrow
         )
+        self.arrows_remaining -= 1
+        return True
 
     # =====================================================
     # DRAW
@@ -402,8 +435,13 @@ class Game:
             True, (255, 255, 255)
         )
         self.screen.blit(text, (24, 48))
+        if self.restock_remaining > 0:
+            ammo_text = f"Arrows: {self.arrows_remaining}/{self.MAX_ARROWS}  Restocking: {self.restock_remaining:.1f}s"
+        else:
+            ammo_text = f"Arrows: {self.arrows_remaining}/{self.MAX_ARROWS}"
+        self.screen.blit(self.font.render(ammo_text, True, (255, 230, 150)), (24, 70))
         controls = self.font.render(
-            f"{self.scene.title()}  |  WASD move  H heal  M bow  LMB attack",
+            f"{self.scene.title()}  |  WASD move  H heal  M bow  LMB attack  R restock",
             True, (255, 255, 255)
         )
         self.screen.blit(controls, (12, SCREEN_HEIGHT - 32))

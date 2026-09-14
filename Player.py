@@ -163,14 +163,8 @@ class Hero(pygame.sprite.Sprite):
 
         move_x = int(dx * self.speed * dt)
         move_y = int(dy * self.speed * dt)
-        if move_x:
-            candidate = self.rect.move(move_x, 0)
-            if collision_checker is None or not collision_checker(candidate):
-                self.rect = candidate
-        if move_y:
-            candidate = self.rect.move(0, move_y)
-            if collision_checker is None or not collision_checker(candidate):
-                self.rect = candidate
+        self._move_axis(move_x, 0, collision_checker)
+        self._move_axis(0, move_y, collision_checker)
 
         # =================================================
         # SCREEN BOUNDARIES
@@ -195,6 +189,27 @@ class Hero(pygame.sprite.Sprite):
             SCREEN_HEIGHT,
             self.rect.bottom
         )
+
+    def _move_axis(self, dx, dy, collision_checker):
+        """Move as far as possible on one axis without entering an obstacle."""
+        distance = dx if dx else dy
+        if not distance:
+            return
+
+        if collision_checker is None:
+            self.rect = self.rect.move(dx, dy)
+            return
+
+        sign = 1 if distance > 0 else -1
+        for _ in range(abs(distance)):
+            offset = sign
+            candidate = self.rect.move(
+                offset if dx else 0,
+                offset if dy else 0
+            )
+            if collision_checker(candidate):
+                break
+            self.rect = candidate
 
     def take_damage(self, amount):
         self.health = max(0, self.health - amount)

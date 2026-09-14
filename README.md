@@ -8,6 +8,11 @@ Extract the complete project folder, then run `Main.py` from that folder:
 python Main.py
 ```
 
+Controls: WASD moves, H heals, M equips the bow, and hold the left mouse
+button to shoot. The quiver starts with 10 arrows; press R to begin a
+30-second restock when it is not full. During game over, R keeps its restart
+behavior instead.
+
 Keep `Settings.py`, `Player.py`, `Map.py`, `Arrow.py`, `Enemy.py`, `Main.py`, and
 the `tiny-RPG-forest-files` assets folder together. Running `Main.py` from a
 different directory can cause `ModuleNotFoundError: No module named 'Settings'`.
