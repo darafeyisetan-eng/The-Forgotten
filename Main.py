@@ -22,6 +22,13 @@ class Game:
 
     MAX_ARROWS = 10
     RESTOCK_DURATION = 30.0
+    SLIME_BASE_HEALTH = 60
+    SLIME_HEALTH_PER_WAVE = 20
+    ENEMY_SPAWN_POINTS = (
+        (150, 150),
+        (650, 180),
+        (650, 450),
+    )
 
     def __init__(self):
 
@@ -83,13 +90,11 @@ class Game:
         # =====================================================
 
         self.arrows = pygame.sprite.Group()
-        self.enemies = pygame.sprite.Group(
-            Enemy(150, 150),
-            Enemy(650, 180),
-            Enemy(650, 450)
-        )
         self.scene = "forest"
         self.map = Map(self.scene)
+        self.wave = 1
+        self.enemies = pygame.sprite.Group()
+        self.spawn_wave()
         self.place_player_at_road()
         self.game_over = False
         self.arrows_remaining = self.MAX_ARROWS
@@ -305,6 +310,7 @@ class Game:
         for enemy in list(self.enemies):
             if enemy.health <= 0:
                 enemy.kill()
+        self.advance_wave_if_cleared()
         if self.player.health <= 0:
             self.game_over = True
 
@@ -323,53 +329,35 @@ class Game:
 
     def restart(self):
         self.player.health = self.player.max_health
+        self.wave = 1
         self.place_player_at_road()
         self.arrows_remaining = self.MAX_ARROWS
         self.restock_remaining = 0.0
         self.arrows.empty()
-        self.enemies = pygame.sprite.Group(
-            Enemy(150, 150),
-            Enemy(650, 180),
-            Enemy(650, 450)
-        )
+        self.spawn_wave()
         self.game_over = False
 
     def place_player_at_road(self):
         """Place the player at a safe side of the road for the current scene."""
-        if self.scene == "forest":
-            preferred = [
-                (SCREEN_WIDTH - 140, SCREEN_HEIGHT // 2),
-                (SCREEN_WIDTH - 210, SCREEN_HEIGHT // 2),
-                (SCREEN_WIDTH - 140, SCREEN_HEIGHT // 2 - 110),
-                (SCREEN_WIDTH - 140, SCREEN_HEIGHT // 2 + 110),
-            ]
-        else:
-            preferred = [
-                (140, SCREEN_HEIGHT // 2),
-                (210, SCREEN_HEIGHT // 2),
-                (140, SCREEN_HEIGHT // 2 - 110),
-                (140, SCREEN_HEIGHT // 2 + 110),
-            ]
+        self.player.rect = self.map.find_road_spawn(self.player.rect)
 
-        candidates = preferred + [
-            (x, y)
-            for y in range(55, SCREEN_HEIGHT - 54, 55)
-            for x in range(55, SCREEN_WIDTH - 54, 55)
-        ]
-        for x, y in candidates:
-            candidate = self.player.rect.copy()
-            candidate.center = (x, y)
-            if (
-                candidate.left >= 0
-                and candidate.top >= 0
-                and candidate.right <= SCREEN_WIDTH
-                and candidate.bottom <= SCREEN_HEIGHT
-                and not self.map.collides(candidate)
-            ):
-                self.player.rect = candidate
-                return
+    def spawn_wave(self):
+        """Create the current wave with health scaled from its wave number."""
+        health = self.SLIME_BASE_HEALTH + (
+            (self.wave - 1) * self.SLIME_HEALTH_PER_WAVE
+        )
+        self.enemies = pygame.sprite.Group(
+            *(
+                Enemy(x, y, max_health=health)
+                for x, y in self.ENEMY_SPAWN_POINTS
+            )
+        )
 
-        raise RuntimeError(f"No free spawn position found in {self.scene}")
+    def advance_wave_if_cleared(self):
+        if self.enemies:
+            return
+        self.wave += 1
+        self.spawn_wave()
 
     def try_scene_transition(self):
         if not self.map.at_road_exit(self.player.rect):
@@ -378,11 +366,7 @@ class Game:
         self.scene = "grove" if self.scene == "forest" else "forest"
         self.map = Map(self.scene)
         self.arrows.empty()
-        self.enemies = pygame.sprite.Group(
-            Enemy(150, 150),
-            Enemy(650, 180),
-            Enemy(650, 450),
-        )
+        self.spawn_wave()
         self.place_player_at_road()
 
     # =====================================================
@@ -462,6 +446,11 @@ class Game:
         else:
             ammo_text = f"Arrows: {self.arrows_remaining}/{self.MAX_ARROWS}"
         self.screen.blit(self.font.render(ammo_text, True, (255, 230, 150)), (24, 70))
+        wave_text = self.font.render(
+            f"Wave: {self.wave}  Slimes: {len(self.enemies)}",
+            True, (220, 190, 255)
+        )
+        self.screen.blit(wave_text, (24, 96))
         controls = self.font.render(
             f"{self.scene.title()}  |  WASD move  H heal  M bow  LMB attack  R restock",
             True, (255, 255, 255)

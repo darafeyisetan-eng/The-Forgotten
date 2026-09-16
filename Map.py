@@ -132,11 +132,29 @@ class Map:
         screen.blit(self.image, self.rect)
 
     def collides(self, rect):
-        # The road is deliberately traversable so scene transitions remain
-        # possible even though it is adjacent to the collision layer.
-        if rect.colliderect(self.road_entrance):
-            return False
         return any(rect.colliderect(obstacle) for obstacle in self.collision_rects)
 
     def at_road_exit(self, rect):
-        return rect.colliderect(self.road_entrance)
+        return rect.colliderect(self.road_entrance) and not self.collides(rect)
+
+    def find_road_spawn(self, sprite_rect):
+        """Return a collision-free player rect overlapping this scene's road."""
+        screen = pygame.Rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT)
+        entrance = self.road_entrance
+        x_values = range(
+            entrance.left + sprite_rect.width // 2,
+            entrance.right - sprite_rect.width // 2 + 1,
+            max(1, sprite_rect.width // 4),
+        )
+        y_values = range(
+            entrance.top + sprite_rect.height // 2,
+            entrance.bottom - sprite_rect.height // 2 + 1,
+            max(1, sprite_rect.height // 4),
+        )
+        for x in x_values:
+            for y in y_values:
+                candidate = sprite_rect.copy()
+                candidate.center = (x, y)
+                if screen.contains(candidate) and not self.collides(candidate):
+                    return candidate
+        raise RuntimeError(f"No walkable road spawn found in {self.scene}")

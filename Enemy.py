@@ -3,9 +3,9 @@ import pygame
 
 
 class Enemy(pygame.sprite.Sprite):
-    def __init__(self, x, y, size=42):
+    def __init__(self, x, y, size=42, max_health=60):
         super().__init__()
-        self.max_health = 60
+        self.max_health = max_health
         self.health = self.max_health
         self.speed = 70
         self.damage = 8
@@ -35,3 +35,8 @@ class Enemy(pygame.sprite.Sprite):
         pygame.draw.rect(screen, (50, 20, 20), bar)
         bar.width = int(bar.width * self.health / self.max_health)
         pygame.draw.rect(screen, (210, 70, 65), bar)
+        health_font = pygame.font.Font(None, 18)
+        health_text = health_font.render(
+            f"{self.health}/{self.max_health}", True, (255, 235, 190)
+        )
+        screen.blit(health_text, (self.rect.left, self.rect.bottom + 2))

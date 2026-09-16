@@ -2,7 +2,8 @@
 
 ## Run the game
 
-Extract the complete project folder, then run `Main.py` from that folder:
+Extract the complete project folder, including the `assets` directory and the
+original `tiny-RPG-forest-files` art bundle, then run `Main.py` from that folder:
 
 ```powershell
 python Main.py
@@ -10,8 +11,10 @@ python Main.py
 
 Controls: WASD moves, H heals, M equips the bow, and hold the left mouse
 button to shoot. The quiver starts with 10 arrows; press R to begin a
-30-second restock when it is not full. During game over, R keeps its restart
-behavior instead.
+30-second restock when it is not full. During game over, R restarts the game.
+Defeat every slime to advance automatically to the next wave; each wave gives
+slimes more maximum health. The HUD shows the active wave and remaining slime
+count, while each slime shows its current and maximum health.
 
 Keep `Settings.py`, `Player.py`, `Map.py`, `Arrow.py`, `Enemy.py`, `Main.py`, and
 the `tiny-RPG-forest-files` assets folder together. Running `Main.py` from a
