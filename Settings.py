@@ -36,9 +36,23 @@ BASE_DIR = os.path.dirname(
 # ASSET PATH
 # =====================================================
 
+# Support both layouts used by the downloadable project:
+#   project/tiny-RPG-forest-files/Assets/PNG
+#   tiny-RPG-forest-files/project/ (when the project is copied into the bundle)
+_asset_roots = (
+    os.path.join(BASE_DIR, "tiny-RPG-forest-files"),
+    os.path.dirname(BASE_DIR),
+)
+_bundle_root = next(
+    (
+        root for root in _asset_roots
+        if os.path.isdir(os.path.join(root, "Assets", "PNG"))
+    ),
+    _asset_roots[0],
+)
+
 ASSET_PATH = os.path.join(
-    BASE_DIR,
-    "tiny-RPG-forest-files",
+    _bundle_root,
     "Assets",
     "PNG"
 )
